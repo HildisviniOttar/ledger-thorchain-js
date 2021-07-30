@@ -2,7 +2,10 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
+  preset: 'ts-jest',
   modulePaths: ["<rootDir>/src", "<rootDir>/tests"],
+  testPathIgnorePatterns: ['<rootDir>/node_modules', '<rootDir>/dist'],
+  setupFilesAfterEnv: ['./jest.setup.js'],
 
   moduleNameMapper: {
     "^jest$": "<rootDir>/tests/jest.js",
@@ -11,9 +14,6 @@ module.exports = {
 
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
-
-  // The directory where Jest should output its coverage files
-  coverageDirectory: "coverage",
 
   // The test environment that will be used for testing
   testEnvironment: "node",
