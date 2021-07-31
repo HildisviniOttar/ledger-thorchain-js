@@ -47,8 +47,7 @@
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import TransportWebHID from "@ledgerhq/hw-transport-webhid";
-import THORChainApp from "../../lib/index";
-import { LedgerErrorType } from "../../lib/common";
+import THORChainApp, { LedgerErrorType } from "../../lib/index";
 
 const path = [44, 931, 0, 0, 0];
 

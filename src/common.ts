@@ -1,6 +1,3 @@
-import Transport from "@ledgerhq/hw-transport";
-import { VersionResponse } from "./types";
-
 export const CLA = 0x55;
 export const CHUNK_SIZE = 250;
 export const APP_KEY = "CSM";
@@ -115,33 +112,4 @@ export function ledgerErrorFromResponse(response?: unknown): LedgerError {
   }
 
   return new LedgerError(LedgerErrorType.UnknownResponse, `Unknown response ${response}`);
-}
-
-export async function getVersion(transport: Transport): Promise<VersionResponse> {
-  try {
-    const response: Buffer = await transport.send(CLA, INS.GET_VERSION, 0, 0);
-
-    const errorCodeData = response.slice(-2);
-    const returnCode = (errorCodeData[0] * 256 + errorCodeData[1]) as LedgerErrorType;
-
-    let targetId = 0;
-    if (response.length >= 9) {
-      /* eslint-disable no-bitwise */
-      targetId = (response[5] << 24) + (response[6] << 16) + (response[7] << 8) + (response[8] << 0);
-      /* eslint-enable no-bitwise */
-    }
-
-    return {
-      returnCode,
-      errorMessage: errorCodeToString(returnCode),
-      testMode: response[0] !== 0,
-      major: response[1],
-      minor: response[2],
-      patch: response[3],
-      deviceLocked: response[4] === 1,
-      targetId: targetId.toString(16),
-    };
-  } catch (error) {
-    throw ledgerErrorFromResponse(error);
-  }
 }

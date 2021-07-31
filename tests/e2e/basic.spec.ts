@@ -1,8 +1,7 @@
-import THORChainApp from "../../src/index";
+import THORChainApp, { LedgerErrorType } from "../../src/index";
 import TransportNodeHid from "@ledgerhq/hw-transport-node-hid";
 import secp256k1 from "secp256k1";
 import crypto from "crypto";
-import { LedgerErrorType } from "../../src/common";
 import Transport from "@ledgerhq/hw-transport";
 
 require("dotenv").config({ path: "./.e2e.env" });
