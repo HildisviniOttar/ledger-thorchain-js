@@ -37,7 +37,7 @@ Hint: Add [`.only`](https://jestjs.io/docs/api#testonlyname-fn-timeout) to the t
 
 ## Example
 
-This repo also includes a simple Vue example for U2F and WebUSB.
+This repo also includes a simple Vue example for WebUSB and WebHID.
 
 To run it locally
 

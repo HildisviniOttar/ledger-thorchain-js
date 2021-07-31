@@ -146,7 +146,7 @@ export default {
       this.log(`Test mode: ${response.testMode}`);
 
       // now it is possible to access all commands in the app
-      response = await app.publicKey(path);
+      response = await app.getPublicKey(path);
       if (response.returnCode !== LedgerErrorType.NoErrors) {
         this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
