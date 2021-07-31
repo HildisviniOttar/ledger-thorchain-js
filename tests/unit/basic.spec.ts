@@ -1,4 +1,4 @@
-import THORChainApp from "index.js";
+import THORChainApp from "../../src/index";
 
 describe("THORChainApp unit", () => {
   it("check address conversion", async () => {

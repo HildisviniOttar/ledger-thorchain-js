@@ -8,9 +8,9 @@ import {
   PAYLOAD_TYPE,
   ledgerErrorFromResponse,
 } from "./common";
-import { SignResponse } from "./types";
+import { PubKeyResponse, SignResponse } from "./types";
 
-export function serializePathv2(path: number[]): Buffer {
+export function serializePath(path: number[]): Buffer {
   if (!path || path.length !== 5) {
     throw new Error("Invalid path.");
   }
@@ -25,47 +25,12 @@ export function serializePathv2(path: number[]): Buffer {
   return buf;
 }
 
-async function signSendChunkv1(
+export async function signSendChunk(
   transport: Transport,
   chunkIdx: number,
   chunkNum: number,
   chunk: Buffer,
 ): Promise<SignResponse> {
-  try {
-    const response: Buffer = await transport.send(CLA, INS.SIGN_SECP256K1, chunkIdx, chunkNum, chunk, [
-      LedgerErrorType.NoErrors,
-      LedgerErrorType.DataIsInvalid,
-      LedgerErrorType.BadKeyHandle,
-    ]);
-
-    const errorCodeData = response.slice(-2);
-    const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
-    let errorMessage = errorCodeToString(returnCode);
-
-    if (returnCode === LedgerErrorType.BadKeyHandle || returnCode === LedgerErrorType.DataIsInvalid) {
-      errorMessage = `${errorMessage} : ${response.slice(0, response.length - 2).toString("ascii")}`;
-    }
-
-    if (response.length > 2) {
-      return {
-        returnCode,
-        errorMessage,
-        signature: response.slice(0, response.length - 2),
-      };
-    }
-
-    throw new LedgerError(returnCode, errorMessage);
-  } catch (error) {
-    throw ledgerErrorFromResponse(error);
-  }
-}
-
-export async function signSendChunkv2(
-  transport: Transport,
-  chunkIdx: number,
-  chunkNum: number,
-  chunk: Buffer,
-) {
   let payloadType = PAYLOAD_TYPE.ADD;
   if (chunkIdx === 1) {
     payloadType = PAYLOAD_TYPE.INIT;
@@ -74,10 +39,41 @@ export async function signSendChunkv2(
     payloadType = PAYLOAD_TYPE.LAST;
   }
 
-  return signSendChunkv1(transport, payloadType, 0, chunk);
+  const response: Buffer = await transport.send(CLA, INS.SIGN_SECP256K1, payloadType, 0, chunk, [
+    LedgerErrorType.NoErrors,
+    LedgerErrorType.DataIsInvalid,
+    LedgerErrorType.BadKeyHandle,
+    LedgerErrorType.SignVerifyError,
+  ]);
+
+  const errorCodeData = response.slice(-2);
+  const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
+  let errorMessage = errorCodeToString(returnCode);
+
+  if (
+    returnCode === LedgerErrorType.BadKeyHandle ||
+    returnCode === LedgerErrorType.DataIsInvalid ||
+    returnCode === LedgerErrorType.SignVerifyError
+  ) {
+    errorMessage = `${errorMessage} : ${response.slice(0, response.length - 2).toString("ascii")}`;
+    throw new LedgerError(returnCode, errorMessage);
+  }
+
+  if (returnCode === LedgerErrorType.NoErrors && response.length > 2) {
+    return {
+      returnCode,
+      errorMessage,
+      signature: response.slice(0, response.length - 2),
+    };
+  }
+
+  return {
+    returnCode,
+    errorMessage,
+  };
 }
 
-export async function publicKeyv2(transport: Transport, data: Buffer) {
+export async function publicKey(transport: Transport, data: Buffer): Promise<PubKeyResponse> {
   try {
     const response = await transport.send(CLA, INS.GET_ADDR_SECP256K1, 0, 0, data, [
       LedgerErrorType.NoErrors,
@@ -87,10 +83,9 @@ export async function publicKeyv2(transport: Transport, data: Buffer) {
     const compressedPk = Buffer.from(response.slice(0, 33));
 
     return {
-      pk: "OBSOLETE PROPERTY",
-      compressed_pk: compressedPk,
-      return_code: returnCode,
-      error_message: errorCodeToString(returnCode),
+      compressedPk,
+      returnCode,
+      errorMessage: errorCodeToString(returnCode),
     };
   } catch (error) {
     throw ledgerErrorFromResponse(error);

@@ -1,4 +1,5 @@
 /** ******************************************************************************
+ *  (c) 2021 THORChain
  *  (c) 2019 ZondaX GmbH
  *  (c) 2016-2017 Ledger
  *
@@ -19,7 +20,7 @@ import type Transport from "@ledgerhq/hw-transport";
 import crypto from "crypto";
 import Ripemd160 from "ripemd160";
 import { bech32 } from "bech32";
-import { publicKeyv2, serializePathv2, signSendChunkv2 } from "./helper";
+import * as Helpers from "./helper";
 import {
   APP_KEY,
   CHUNK_SIZE,
@@ -32,7 +33,14 @@ import {
   LedgerErrorType,
   ledgerErrorFromResponse,
 } from "./common";
-import { AppInfoResponse, SignResponse, VersionResponse } from "./types";
+import {
+  AddressPubKeyResponse,
+  AppInfoResponse,
+  DeviceInfoResponse,
+  PubKeyResponse,
+  SignResponse,
+  VersionResponse,
+} from "./types";
 
 export * from "./types";
 export { LedgerError };
@@ -54,7 +62,7 @@ export default class THORChainApp {
   }
 
   static serializeHRP(hrp: string): Buffer {
-    if (hrp == null || hrp.length < 3 || hrp.length > 83) {
+    if (!hrp || hrp.length < 3 || hrp.length > 83) {
       throw new LedgerError(LedgerErrorType.HPRInvalid);
     }
     const buf = Buffer.alloc(1 + hrp.length);
@@ -63,7 +71,7 @@ export default class THORChainApp {
     return buf;
   }
 
-  static getBech32FromPK(hrp: string, pk: string): string {
+  static getBech32FromPK(hrp: string, pk: Buffer): string {
     if (pk.length !== 33) {
       throw new LedgerError(LedgerErrorType.PKInvalidBytes);
     }
@@ -83,14 +91,14 @@ export default class THORChainApp {
 
     switch (version.major) {
       case 2:
-        return serializePathv2(path);
+        return Helpers.serializePath(path);
       default:
         throw new LedgerError(LedgerErrorType.ExecutionError, "App Version is not supported");
     }
   }
 
-  async signGetChunks(path: number[], message: Buffer): Promise<Buffer[]> {
-    const serializedPath = await this.serializePath(path);
+  async signGetChunks(path: number[], message: string): Promise<Buffer[]> {
+    const serializedPath: Buffer = await this.serializePath(path);
 
     const chunks = [];
     chunks.push(serializedPath);
@@ -153,14 +161,14 @@ export default class THORChainApp {
         // eslint-disable-next-line no-bitwise
         flagOnboarded: (flagsValue & 4) !== 0,
         // eslint-disable-next-line no-bitwise
-        flagPINValidated: (flagsValue & 128) !== 0,
+        flagPinValidated: (flagsValue & 128) !== 0,
       };
     } catch (error) {
       throw ledgerErrorFromResponse(error);
     }
   }
 
-  async deviceInfo() {
+  async getDeviceInfo(): Promise<DeviceInfoResponse> {
     try {
       const response: Buffer = await this.transport.send(0xe0, 0x01, 0, 0, Buffer.from([]), [
         LedgerErrorType.NoErrors,
@@ -170,11 +178,8 @@ export default class THORChainApp {
       const errorCodeData = response.slice(-2);
       const returnCode = errorCodeData[0] * 256 + errorCodeData[1];
 
-      if (returnCode === 0x6e00) {
-        return {
-          return_code: returnCode,
-          error_message: "This command is only available in the Dashboard",
-        };
+      if (returnCode === LedgerErrorType.AppDoesNotSeemToBeOpen) {
+        throw new LedgerError(returnCode, "This command is only available in the Dashboard");
       }
 
       const targetId = response.slice(0, 4).toString("hex");
@@ -200,9 +205,8 @@ export default class THORChainApp {
       const mcuVersion = tmp.toString();
 
       return {
-        return_code: returnCode,
-        error_message: errorCodeToString(returnCode),
-        // //
+        returnCode,
+        errorMessage: errorCodeToString(returnCode),
         targetId,
         seVersion,
         flag,
@@ -213,7 +217,7 @@ export default class THORChainApp {
     }
   }
 
-  async publicKey(path: number[]) {
+  async getPublicKey(path: number[]): Promise<PubKeyResponse> {
     try {
       const serializedPath = await this.serializePath(path);
       const version = await this.getVersion();
@@ -221,7 +225,7 @@ export default class THORChainApp {
       switch (version.major) {
         case 2: {
           const data = Buffer.concat([THORChainApp.serializeHRP("thor"), serializedPath]);
-          return publicKeyv2(this.transport, data);
+          return Helpers.publicKey(this.transport, data);
         }
         default:
           throw new LedgerError(LedgerErrorType.ExecutionError, "App Version is not supported");
@@ -231,7 +235,7 @@ export default class THORChainApp {
     }
   }
 
-  async getAddressAndPubKey(path: number[], hrp: string) {
+  async getAddressAndPubKey(path: number[], hrp: string): Promise<AddressPubKeyResponse> {
     const serializedPath: Buffer = await this.serializePath(path);
     const serializedHRP = THORChainApp.serializeHRP(hrp);
     const data = Buffer.concat([serializedHRP, serializedPath]);
@@ -250,14 +254,14 @@ export default class THORChainApp {
     const bech32Address = Buffer.from(response.slice(33, -2)).toString();
 
     return {
-      bech32_address: bech32Address,
-      compressed_pk: compressedPk,
-      returnCode: returnCode,
+      bech32Address,
+      compressedPk,
+      returnCode,
       errorMessage: errorCodeToString(returnCode),
     };
   }
 
-  async showAddressAndPubKey(path: number[], hrp: string) {
+  async showAddressAndPubKey(path: number[], hrp: string): Promise<AddressPubKeyResponse> {
     const serializedPath: Buffer = await this.serializePath(path);
     const data = Buffer.concat([THORChainApp.serializeHRP(hrp), serializedPath]);
     const response: Buffer = await this.transport.send(
@@ -275,44 +279,35 @@ export default class THORChainApp {
     const bech32Address = Buffer.from(response.slice(33, -2)).toString();
 
     return {
-      bech32_address: bech32Address,
-      compressed_pk: compressedPk,
+      bech32Address,
+      compressedPk,
       returnCode: returnCode,
       errorMessage: errorCodeToString(returnCode),
     };
   }
 
-  async signSendChunk(chunkIdx: number, chunkNum: number, chunk: Buffer) {
-    const version = await this.getVersion();
+  async signSendChunk(chunkIdx: number, chunkNum: number, chunk: Buffer): Promise<SignResponse> {
+    const version = await getVersion(this.transport);
     switch (version.major) {
       case 2:
-        return signSendChunkv2(this.transport, chunkIdx, chunkNum, chunk);
+        return Helpers.signSendChunk(this.transport, chunkIdx, chunkNum, chunk);
       default:
         throw new LedgerError(LedgerErrorType.ExecutionError, "App Version is not supported");
     }
   }
 
-  async sign(path: number[], message: Buffer) {
-    const chunks: Buffer[] = await this.signGetChunks(path, message)
-    const response: SignResponse = await this.signSendChunk(1, chunks.length, chunks[0])
-        let result = {
-          returnCode: response.returnCode,
-          errorMessage: response.errorMessage,
-          signature: null as null | Buffer,
-        };
+  async sign(path: number[], message: string): Promise<SignResponse> {
+    const chunks: Buffer[] = await this.signGetChunks(path, message);
+    let response: SignResponse = await this.signSendChunk(1, chunks.length, chunks[0]);
 
-        for (let i = 1; i < chunks.length; i += 1) {
-          // eslint-disable-next-line no-await-in-loop
-          result = await this.signSendChunk(1 + i, chunks.length, chunks[i]);
-          if (result.returnCode !== LedgerErrorType.NoErrors) {
-            break;
-          }
-        }
+    for (let i = 1; i < chunks.length; i += 1) {
+      // eslint-disable-next-line no-await-in-loop
+      response = await this.signSendChunk(1 + i, chunks.length, chunks[i]);
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        break;
+      }
+    }
 
-        return {
-          returnCode: result.returnCode,
-          errorMessage: result.errorMessage,
-          signature: result.signature,
-        };
+    return response;
   }
 }

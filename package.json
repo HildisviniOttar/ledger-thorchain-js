@@ -2,21 +2,16 @@
   "name": "@thorchain/ledger-thorchain",
   "version": "0.0.3",
   "description": "Node API for THORChain App (Ledger Nano S/X)",
-  "main": "./dist/index.js",
-  "module": "dist/index.esm.js",
-  "typings": "dist/index.d.ts",
-  "directories": {
-    "lib": "dist",
-    "doc": "docs",
-    "test": "tests"
-  },
+  "main": "lib/index.js",
+  "module": "lib-es/index.js",
+  "types": "lib/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/thorchain/ledger-thorchain-js.git"
   },
   "keywords": [
     "Ledger",
-    "Javascript",
+    "TypeScript",
     "Tendermint",
     "THORChain"
   ],
@@ -36,10 +31,12 @@
     "@ledgerhq/hw-transport-webhid": "^6.1.0",
     "@ledgerhq/hw-transport-webusb": "^6.1.0",
     "@ledgerhq/logs": "^6.0.2",
-    "@rollup/plugin-commonjs": "^19.0.1",
-    "@rollup/plugin-json": "^4.1.0",
-    "@rollup/plugin-node-resolve": "^13.0.2",
+    "@types/jest": "^26.0.24",
+    "@types/ledgerhq__hw-transport": "^4.21.4",
+    "@types/node": "^16.4.8",
+    "@types/node-hid": "^1.3.1",
     "@types/ripemd160": "^2.0.0",
+    "@types/secp256k1": "^4.0.3",
     "@vue/cli-plugin-babel": "^4.5.13",
     "@vue/cli-service": "^4.5.13",
     "bip32": "2.0.6",
@@ -51,8 +48,6 @@
     "jest": "^27.0.6",
     "prettier": "^2.3.2",
     "rimraf": "^3.0.2",
-    "rollup": "^2.53.3",
-    "rollup-plugin-typescript2": "^0.30.0",
     "secp256k1": "^4.0.2",
     "ts-jest": "^27.0.4",
     "typescript": "^4.3.5",
@@ -60,8 +55,8 @@
     "vue-template-compiler": "^2.6.14"
   },
   "scripts": {
-    "clean": "rimraf lib/**",
-    "build": "yarn clean && rollup -c",
+    "clean": "rimraf \"{lib,lib-es}\"/**",
+    "build": "yarn clean && tsc && tsc -m ES6 --outDir lib-es",
     "test": "jest",
     "lint": "eslint \"{src,__tests__}/**/*.ts\" --fix --max-warnings 0",
     "prepublishOnly": "yarn build",
@@ -71,16 +66,7 @@
   },
   "moduleDirectories": [
     "node_modules",
-    "dist"
-  ],
-  "postcss": {
-    "plugins": {
-      "autoprefixer": {}
-    }
-  },
-  "browserslist": [
-    "> 1%",
-    "last 2 versions"
+    "lib"
   ],
   "publishConfig": {
     "access": "public"

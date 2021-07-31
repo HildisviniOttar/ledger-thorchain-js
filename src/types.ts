@@ -18,9 +18,24 @@ export type AppInfoResponse = BaseResponse &  {
   flagRecovery: boolean;
   flagSignedMcuCode: boolean;
   flagOnboarded: boolean;
-  flagPINValidated: boolean;
+  flagPinValidated: boolean;
+}
+
+export type DeviceInfoResponse = BaseResponse &  {
+  targetId: string
+  seVersion: string
+  flag: string
+  mcuVersion: string
 }
 
 export type SignResponse = BaseResponse &  {
-  signature: Buffer
+  signature?: Buffer
+}
+
+export type PubKeyResponse = BaseResponse &  {
+  compressedPk: Buffer
+}
+
+export type AddressPubKeyResponse = PubKeyResponse &  {
+  bech32Address: string
 }

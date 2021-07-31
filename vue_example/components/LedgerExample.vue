@@ -47,8 +47,8 @@
 import TransportWebUSB from "@ledgerhq/hw-transport-webusb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import TransportWebHID from "@ledgerhq/hw-transport-webhid";
-import THORChainApp from "../../src";
-import { ERROR_CODE } from "../../src/common";
+import THORChainApp from "../../lib/index";
+import { LedgerErrorType } from "../../lib/common";
 
 const path = [44, 931, 0, 0, 0];
 
@@ -104,15 +104,15 @@ export default {
 
       // now it is possible to access all commands in the app
       const response = await app.getVersion();
-      if (response.return_code !== ERROR_CODE.NoError) {
-        this.log(`Error [${response.return_code}] ${response.error_message}`);
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
       }
 
       this.log("Response received!");
       this.log(`App Version ${response.major}.${response.minor}.${response.patch}`);
-      this.log(`Device Locked: ${response.device_locked}`);
-      this.log(`Test mode: ${response.test_mode}`);
+      this.log(`Device Locked: ${response.deviceLocked}`);
+      this.log(`Test mode: ${response.testMode}`);
       this.log("Full response:");
       this.log(response);
     },
@@ -124,9 +124,9 @@ export default {
       const app = new THORChainApp(transport);
 
       // now it is possible to access all commands in the app
-      const response = await app.appInfo();
-      if (response.return_code !== 0x9000) {
-        this.log(`Error [${response.return_code}] ${response.error_message}`);
+      const response = await app.getAppInfo();
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
       }
 
@@ -142,13 +142,13 @@ export default {
 
       let response = await app.getVersion();
       this.log(`App Version ${response.major}.${response.minor}.${response.patch}`);
-      this.log(`Device Locked: ${response.device_locked}`);
-      this.log(`Test mode: ${response.test_mode}`);
+      this.log(`Device Locked: ${response.deviceLocked}`);
+      this.log(`Test mode: ${response.testMode}`);
 
       // now it is possible to access all commands in the app
       response = await app.publicKey(path);
-      if (response.return_code !== 0x9000) {
-        this.log(`Error [${response.return_code}] ${response.error_message}`);
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
       }
 
@@ -165,13 +165,13 @@ export default {
 
       let response = await app.getVersion();
       this.log(`App Version ${response.major}.${response.minor}.${response.patch}`);
-      this.log(`Device Locked: ${response.device_locked}`);
-      this.log(`Test mode: ${response.test_mode}`);
+      this.log(`Device Locked: ${response.deviceLocked}`);
+      this.log(`Test mode: ${response.testMode}`);
 
       // now it is possible to access all commands in the app
       response = await app.getAddressAndPubKey(path, "tthor");
-      if (response.return_code !== 0x9000) {
-        this.log(`Error [${response.return_code}] ${response.error_message}`);
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
       }
 
@@ -188,14 +188,14 @@ export default {
 
       let response = await app.getVersion();
       this.log(`App Version ${response.major}.${response.minor}.${response.patch}`);
-      this.log(`Device Locked: ${response.device_locked}`);
-      this.log(`Test mode: ${response.test_mode}`);
+      this.log(`Device Locked: ${response.deviceLocked}`);
+      this.log(`Test mode: ${response.testMode}`);
 
       // now it is possible to access all commands in the app
       this.log("Please click in the device");
       response = await app.showAddressAndPubKey(path, "tthor");
-      if (response.return_code !== ERROR_CODE.NoError) {
-        this.log(`Error [${response.return_code}] ${response.error_message}`);
+      if (response.returnCode !== LedgerErrorType.NoErrors) {
+        this.log(`Error [${response.returnCode}] ${response.errorMessage}`);
         return;
       }
 
@@ -212,12 +212,11 @@ export default {
 
       let response = await app.getVersion();
       this.log(`App Version ${response.major}.${response.minor}.${response.patch}`);
-      this.log(`Device Locked: ${response.device_locked}`);
-      this.log(`Test mode: ${response.test_mode}`);
+      this.log(`Device Locked: ${response.deviceLocked}`);
+      this.log(`Test mode: ${response.testMode}`);
 
       // now it is possible to access all commands in the app
-      const message =
-        '{"account_number":"588","chain_id":"thorchain","fee":{"amount":[],"gas":"2000000"},"memo":"TestMemo","msgs":[{"type":"thorchain/MsgSend","value":{"amount":[{"amount":"150000000","denom":"rune"}],"from_address":"tthor1c648xgpter9xffhmcqvs7lzd7hxh0prgv5t5gp","to_address":"tthor10xgrknu44d83qr4s4uw56cqxg0hsev5e68lc9z"}}],"sequence":"5"}';
+      const message = Buffer.from('{"account_number":"588","chain_id":"thorchain","fee":{"amount":[],"gas":"2000000"},"memo":"TestMemo","msgs":[{"type":"thorchain/MsgSend","value":{"amount":[{"amount":"150000000","denom":"rune"}],"from_address":"tthor1c648xgpter9xffhmcqvs7lzd7hxh0prgv5t5gp","to_address":"tthor10xgrknu44d83qr4s4uw56cqxg0hsev5e68lc9z"}}],"sequence":"5"}');
       response = await app.sign(path, message);
 
       this.log("Response received!");

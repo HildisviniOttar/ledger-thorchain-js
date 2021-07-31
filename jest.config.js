@@ -5,19 +5,10 @@ module.exports = {
   preset: 'ts-jest',
   modulePaths: ["<rootDir>/src", "<rootDir>/tests"],
   testPathIgnorePatterns: ['<rootDir>/node_modules', '<rootDir>/dist'],
-  setupFilesAfterEnv: ['./jest.setup.js'],
-
-  moduleNameMapper: {
-    "^jest$": "<rootDir>/tests/jest.js",
-    "^index.js$": "<rootDir>/src/index.js",
-  },
-
   // Automatically clear mock calls and instances between every test
   clearMocks: true,
-
   // The test environment that will be used for testing
   testEnvironment: "node",
-
   // The glob patterns Jest uses to detect test files
   testMatch: [
     "**/tests/**/*.[jt]s?(x)",
