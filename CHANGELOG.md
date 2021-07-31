@@ -1,3 +1,17 @@
+# 0.0.4 (2021-XX-XX)
+
+## Update
+
+- Rewrite in TypeScript
+- Introduce custom `LedgerError`
+- Improve `Promise` handling
+
+## Breaking changes
+
+- Values of misc. `XYZResponse`'s have been renamed to use camel case (instead of snake case)
+- Re-organize helper function to be available in `helpers` and `common` only (Deprecated `v1` helpers have been removed)
+- Rename some methods of THORChain app (mostly to prefix getter methods with `get...`)
+
 # 0.0.3 (2021-07-20)
 
 ## Internal updates
