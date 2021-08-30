@@ -164,7 +164,7 @@ export async function getPublicKey(transport: Transport, data: Buffer): Promise<
  *   2 32   -- length of s is 32 bytes
  *   <32 bytes of s>
  */
-export function extractSignatureFromTLV(signatureArray: number[]): string {
+export function extractSignatureFromTLV(signatureArray: Buffer): string {
   // Check Type Length Value encoding
   if (signatureArray.length < 64) {
     throw Error("Invalid Signature: Too short");
@@ -183,14 +183,14 @@ export function extractSignatureFromTLV(signatureArray: number[]): string {
   const rLength = signatureArray[3];
   var rSignature = signatureArray.slice(4, rLength + 4);
   // Drop leading zero on some 'r' signatures that are 33 bytes.
-  if (rSignature.length === 33 && rSignature[0] == 0) {
+  if (rSignature.length === 33 && rSignature[0] === 0) {
     rSignature = rSignature.slice(1, 33);
   } else if (rSignature.length === 33) {
     throw Error('Invalid signature: "r" too long');
   }
   // add leading zero's to pad to 32 bytes
   while (rSignature.length < 32) {
-    rSignature.unshift(0);
+    Buffer.concat([Buffer.from([0]), rSignature]);
   }
 
   // s signature
@@ -198,24 +198,25 @@ export function extractSignatureFromTLV(signatureArray: number[]): string {
     throw Error("Invalid Ledger Signature TLV encoding: expected length type 0x02");
   }
   const sLength = signatureArray[rLength + 5];
-  if (4 + rLength + 2 + sLength !== signatureArray.length) {
+  if (4 + rLength + 2 + sLength != signatureArray.length) {
     throw Error("Invalid Ledger Signature: TLV byte lengths do not match message length");
   }
-  var sSignature = signatureArray.slice(rLength + 6, signatureArray.length);
+  let sSignature = signatureArray.slice(rLength + 6, signatureArray.length);
   // Drop leading zero on 's' signatures that are 33 bytes. This shouldn't occur since ledger signs using "Small s" math. But just to be sure...
   if (sSignature.length === 33 && sSignature[0] === 0) {
     sSignature = sSignature.slice(1, 33);
   } else if (sSignature.length === 33) {
     throw Error('Invalid signature: "s" too long');
   }
+
   // add leading zero's to pad to 32 bytes
   while (sSignature.length < 32) {
-    sSignature.unshift(0);
+    Buffer.concat([Buffer.from([0]), sSignature]);
   }
 
   if (rSignature.length !== 32 || sSignature.length !== 32) {
     throw Error("Invalid signatures: must be 32 bytes each");
   }
 
-  return Buffer.concat([Buffer.from(rSignature), Buffer.from(sSignature)]).toString('base64')
+  return Buffer.concat([rSignature, sSignature]).toString('base64')
 }

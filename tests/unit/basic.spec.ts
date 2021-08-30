@@ -9,11 +9,12 @@ describe("Helpers unit", () => {
   });
 
   it("extractSignatureFromTLV", async () => {
-    const signature =  [ 48, 69, 2, 33,
+    const signature =  Buffer.from([ 48, 69, 2, 33,
     0, 161, 207, 217, 127, 151, 190, 23, 98, 217, 186, 108, 82, 102, 19, 222, 20, 171, 6, 240, 134, 195, 251, 98, 190, 246, 228, 243, 215, 95, 166, 121, 165,
     2, 32,
-    69, 188, 53,  213, 24, 9, 191, 90, 244, 21, 213, 146, 240, 109, 156, 221, 247, 63, 131, 52, 150, 253, 199, 153, 132, 76, 91, 239, 28, 254, 68, 80 ];
+    69, 188, 53,  213, 24, 9, 191, 90, 244, 21, 213, 146, 240, 109, 156, 221, 247, 63, 131, 52, 150, 253, 199, 153, 132, 76, 91, 239, 28, 254, 68, 80 ]);
     const result = extractSignatureFromTLV(signature);
     expect(result).toEqual("oc/Zf5e+F2LZumxSZhPeFKsG8IbD+2K+9uTz11+meaVFvDXVGAm/WvQV1ZLwbZzd9z+DNJb9x5mETFvvHP5EUA==");
   });
+
 });
