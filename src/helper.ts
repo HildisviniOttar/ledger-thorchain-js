@@ -164,7 +164,7 @@ export async function getPublicKey(transport: Transport, data: Buffer): Promise<
  *   2 32   -- length of s is 32 bytes
  *   <32 bytes of s>
  */
-export function extractSignatureFromTLV(signatureArray: Buffer): string {
+export function extractSignatureFromTLV(signatureArray: Buffer): Buffer {
   // Check Type Length Value encoding
   if (signatureArray.length < 64) {
     throw Error("Invalid Signature: Too short");
@@ -218,5 +218,5 @@ export function extractSignatureFromTLV(signatureArray: Buffer): string {
     throw Error("Invalid signatures: must be 32 bytes each");
   }
 
-  return Buffer.concat([rSignature, sSignature]).toString('base64')
+  return Buffer.concat([rSignature, sSignature])
 }
