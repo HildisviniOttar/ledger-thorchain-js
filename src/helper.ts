@@ -181,7 +181,7 @@ export function extractSignatureFromTLV(signatureArray: Buffer): Buffer {
 
   // r signature
   const rLength = signatureArray[3];
-  var rSignature = signatureArray.slice(4, rLength + 4);
+  let rSignature = signatureArray.slice(4, rLength + 4);
   // Drop leading zero on some 'r' signatures that are 33 bytes.
   if (rSignature.length === 33 && rSignature[0] === 0) {
     rSignature = rSignature.slice(1, 33);
